@@ -1,7 +1,7 @@
 import * as THREE from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
-import vertexShaderCode from "./shaders/9_coloured_wave/v.glsl";
-import fragmentShaderCode from "./shaders/9_coloured_wave/f.frag";
+import vertexShaderCode from "./shaders/10_coloured_wave/v.glsl";
+import fragmentShaderCode from "./shaders/10_coloured_wave/f.frag";
 
 const uniformData = {
     u_time: {
