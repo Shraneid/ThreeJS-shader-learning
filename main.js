@@ -1,13 +1,19 @@
 import * as THREE from "three";
+import Stats from 'three/examples/jsm/libs/stats.module.js';
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
-import vertexShaderCode from "./shaders/10_coloured_wave/v.glsl";
-import fragmentShaderCode from "./shaders/10_coloured_wave/f.frag";
+
+import grassVertexShaderCode from "./shaders/11_first_grass_test/grass.glsl";
+import grassFragmentShaderCode from "./shaders/11_first_grass_test/grass.frag";
+import vertexShaderCode from "./shaders/11_first_grass_test/plane.glsl";
+import fragmentShaderCode from "./shaders/11_first_grass_test/plane.frag";
 
 const uniformData = {
     u_time: {
         type: "f",
         value: 0.0,
     },
+    // noise_texture: { type: "t", value: new THREE.TextureLoader().load("public/images/noise/Dissolve_Noise_Texture.png") }
+    noise_texture: { type: "t", value: new THREE.TextureLoader().load("public/images/noise/perlin.png") }
 };
 
 var camera, scene, renderer, controls;
@@ -43,35 +49,36 @@ class BasicWorldDemo {
         );
 
         const fov = 60;
-        const aspect = 1920 / 1080;
-        const near = 1.0;
+        // const aspect = 1920 / 1080;
+        const aspect = 1080 / 1920;
+        const near = 1.;
         const far = 1000;
 
         camera = new THREE.PerspectiveCamera(fov, aspect, near, far);
-        camera.position.x = 40;
-        camera.position.y = 30;
-        camera.position.z = 30;
+        camera.position.x = 10;
+        camera.position.y = 10;
+        camera.position.z = 20;
 
-        let light = new THREE.DirectionalLight(0xffffff);
-        light.position.set(40, 100, 30);
-        light.target.position.set(0, 0, 0);
-        light.castShadow = true;
-        light.shadow.bias = -0.01;
-        light.shadow.mapSize.width = 2048;
-        light.shadow.mapSize.height = 2048;
-        light.shadow.camera.near = 0.1;
-        light.shadow.camera.far = 500.0;
-        light.shadow.camera.left = 100.0;
-        light.shadow.camera.right = -100.0;
-        light.shadow.camera.top = 100.0;
-        light.shadow.camera.bottom = -100.0;
-        scene.add(light);
+        // let light = new THREE.DirectionalLight(0xffffff);
+        // light.position.set(40, 100, 30);
+        // light.target.position.set(0, 0, 0);
+        // light.castShadow = true;
+        // light.shadow.bias = -0.01;
+        // light.shadow.mapSize.width = 2048;
+        // light.shadow.mapSize.height = 2048;
+        // light.shadow.camera.near = 0.1;
+        // light.shadow.camera.far = 500.;
+        // light.shadow.camera.left = 100.;
+        // light.shadow.camera.right = -100.;
+        // light.shadow.camera.top = 100.;
+        // light.shadow.camera.bottom = -100.;
+        // scene.add(light);
 
         // const helper = new THREE.CameraHelper(light.shadow.camera);
         // scene.add(helper);
 
-        light = new THREE.AmbientLight(0x404040);
-        scene.add(light);
+        const ambientLight = new THREE.AmbientLight(0x404040);
+        scene.add(ambientLight);
 
         // ADDING A SKYBOX
         const loader = new THREE.CubeTextureLoader();
@@ -85,26 +92,112 @@ class BasicWorldDemo {
         ]);
         scene.background = skybox_texture;
 
+        const planeWidth = 20;
+
         // 3D OBJECTS
-        // const ground = new THREE.Mesh(
-        //     new THREE.BoxGeometry(100, 1, 100),
-        //     new THREE.MeshStandardMaterial({ color: 0x00ff00 })
-        // );
-        // ground.castShadow = false;
-        // ground.receiveShadow = true;
-        // scene.add(ground);
+        const plane = new THREE.Mesh(
+            new THREE.PlaneGeometry(planeWidth + 1, planeWidth + 1),
+            // new THREE.ShaderMaterial({
+            //     // wireframe: true,
+            //     uniforms: uniformData,
+            //     vertexShader: vertexShaderCode,
+            //     fragmentShader: fragmentShaderCode,
+            // })
+            new THREE.MeshBasicMaterial({ color: 'red' })
+        );
+        plane.rotateX(-Math.PI / 2)
+
+        plane.castShadow = true
+        plane.receiveShadow = true;
+        scene.add(plane);
 
         const box = new THREE.Mesh(
-            new THREE.BoxGeometry(32, 8, 64, 10, 2, 64),
-            new THREE.ShaderMaterial({
-                wireframe: true,
-                uniforms: uniformData,
-                vertexShader: vertexShaderCode,
-                fragmentShader: fragmentShaderCode,
-            })
+            new THREE.BoxGeometry(3, 3, 3),
+            new THREE.MeshBasicMaterial({ color: 'blue' })
         );
-        box.rotation.y = Math.PI;
-        scene.add(box);
+        box.position.y = 1.5
+        box.castShadow = true;
+        box.receiveShadow = true;
+
+        scene.add(box)
+
+        const grassGeometry = new THREE.BufferGeometry();
+        const vertices = new Float32Array([
+            -0.11, 0., 0.,
+            -0.05, 0., 0.,
+            0., 0., 0.,
+            0.05, 0., 0.,
+            0.11, 0., 0.,
+            -0.1, 0.25, 0.,
+            -0.05, 0.25, 0.,
+            0.05, 0.25, 0.,
+            0.1, 0.25, 0.,
+            -0.08, 0.5, 0.,
+            0., 0.5, 0.,
+            0.08, 0.5, 0.,
+            -0.05, 0.75, 0.,
+            0.05, 0.75, 0.,
+            0., 1., 0.,
+        ])
+        const indices = [
+            0, 1, 5,
+            5, 6, 1,
+            1, 2, 6,
+            6, 7, 2,
+            2, 3, 7,
+            7, 8, 3,
+            3, 4, 8,
+            5, 6, 9,
+            9, 10, 6,
+            6, 7, 10,
+            10, 11, 7,
+            7, 8, 11,
+            9, 10, 12,
+            12, 13, 10,
+            10, 11, 13,
+            12, 13, 14
+        ]
+
+        grassGeometry.setIndex(indices);
+        grassGeometry.setAttribute('position', new THREE.BufferAttribute(vertices, 3))
+
+        const grassMaterial = new THREE.ShaderMaterial({
+            // wireframe: true,
+            uniforms: uniformData,
+            vertexShader: grassVertexShaderCode,
+            fragmentShader: grassFragmentShaderCode,
+            side: THREE.DoubleSide
+        })
+
+        const numberOfGrassBlades = 1000;
+        const perfectSquareNumberOfGrassBlades = Math.ceil(Math.sqrt(numberOfGrassBlades)) ** 2;
+        const grass = new THREE.InstancedMesh(grassGeometry, grassMaterial, perfectSquareNumberOfGrassBlades)
+
+        grass.castShadow = true;
+        grass.receiveShadow = true;
+
+        scene.add(grass);
+
+        const dummy = new THREE.Object3D();
+
+        const grassBladesPerAxis = Math.ceil(Math.sqrt(perfectSquareNumberOfGrassBlades));
+        const halfPlaneWidth = planeWidth / 2;
+        const spacing = planeWidth / (grassBladesPerAxis - 1);
+
+        let index = 0;
+
+        // moving each instance to its position (rotation is done in the vertex shader using a hash function based on position)
+        for (let j = 0; j < grassBladesPerAxis; j++) {
+            for (let i = 0; i < grassBladesPerAxis; i++) {
+                const z = -halfPlaneWidth + j * spacing + (Math.random() * spacing - spacing / 2)
+                const x = -halfPlaneWidth + i * spacing + (Math.random() * spacing - spacing / 2)
+
+                dummy.position.set(x, 0., z);
+                dummy.updateMatrix();
+
+                grass.setMatrixAt(index++, dummy.matrix);
+            }
+        }
 
         controls = new OrbitControls(camera, renderer.domElement);
         controls.update();
@@ -123,6 +216,8 @@ class BasicWorldDemo {
         requestAnimationFrame((timeElapsed) => {
             renderer.render(scene, camera);
 
+            stats.update()
+
             uniformData.u_time.value = this.clock.getElapsedTime();
 
             this.RequestAnimationFrame();
@@ -132,6 +227,9 @@ class BasicWorldDemo {
 }
 
 let APP_ = null;
+
+const stats = new Stats()
+document.body.appendChild(stats.dom)
 
 window.addEventListener("DOMContentLoaded", () => {
     Ammo().then((lib) => {
