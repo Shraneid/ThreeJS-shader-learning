@@ -12,8 +12,8 @@ const uniformData = {
         type: "f",
         value: 0.0,
     },
-    // noise_texture: { type: "t", value: new THREE.TextureLoader().load("public/images/noise/Dissolve_Noise_Texture.png") }
-    noise_texture: { type: "t", value: new THREE.TextureLoader().load("public/images/noise/perlin.png") }
+    // noise_texture: { type: "t", value: new THREE.TextureLoader().load("images/noise/Dissolve_Noise_Texture.png") }
+    noise_texture: { type: "t", value: new THREE.TextureLoader().load("images/noise/perlin.png") }
 };
 
 var camera, scene, renderer, controls;
@@ -55,29 +55,30 @@ class BasicWorldDemo {
         const far = 1000;
 
         camera = new THREE.PerspectiveCamera(fov, aspect, near, far);
-        camera.position.x = 10;
-        camera.position.y = 10;
-        camera.position.z = 20;
+        camera.position.x = -12;
+        camera.position.y = 12;
+        camera.position.z = 21;
 
-        // let light = new THREE.DirectionalLight(0xffffff);
-        // light.position.set(40, 100, 30);
-        // light.target.position.set(0, 0, 0);
-        // light.castShadow = true;
-        // light.shadow.bias = -0.01;
-        // light.shadow.mapSize.width = 2048;
-        // light.shadow.mapSize.height = 2048;
-        // light.shadow.camera.near = 0.1;
-        // light.shadow.camera.far = 500.;
-        // light.shadow.camera.left = 100.;
-        // light.shadow.camera.right = -100.;
-        // light.shadow.camera.top = 100.;
-        // light.shadow.camera.bottom = -100.;
-        // scene.add(light);
+        let light = new THREE.DirectionalLight(0xffffff, 25.);
+        light.position.set(40, 100, 30);
+        light.target.position.set(0, 0, 0);
+        light.castShadow = true;
+        // shadow bias although used in most examples I looked into seems to offset all shadows by A LOT so I don't use it yet
+        // light.shadow.bias = -0.00001;
+        light.shadow.mapSize.width = 16384;
+        light.shadow.mapSize.height = 16384;
+        light.shadow.camera.near = 0.1;
+        light.shadow.camera.far = 200.0;
+        light.shadow.camera.left = 20.0;
+        light.shadow.camera.right = -20.0;
+        light.shadow.camera.top = 20.0;
+        light.shadow.camera.bottom = -20.0;
+        scene.add(light);
 
         // const helper = new THREE.CameraHelper(light.shadow.camera);
         // scene.add(helper);
 
-        const ambientLight = new THREE.AmbientLight(0x404040);
+        const ambientLight = new THREE.AmbientLight(0x404040, 10.);
         scene.add(ambientLight);
 
         // ADDING A SKYBOX
@@ -97,13 +98,7 @@ class BasicWorldDemo {
         // 3D OBJECTS
         const plane = new THREE.Mesh(
             new THREE.PlaneGeometry(planeWidth + 1, planeWidth + 1),
-            // new THREE.ShaderMaterial({
-            //     // wireframe: true,
-            //     uniforms: uniformData,
-            //     vertexShader: vertexShaderCode,
-            //     fragmentShader: fragmentShaderCode,
-            // })
-            new THREE.MeshBasicMaterial({ color: 'red' })
+            new THREE.MeshLambertMaterial({ color: 'yellow', side: THREE.DoubleSide })
         );
         plane.rotateX(-Math.PI / 2)
 
@@ -111,15 +106,15 @@ class BasicWorldDemo {
         plane.receiveShadow = true;
         scene.add(plane);
 
-        const box = new THREE.Mesh(
-            new THREE.BoxGeometry(3, 3, 3),
-            new THREE.MeshBasicMaterial({ color: 'blue' })
-        );
-        box.position.y = 1.5
-        box.castShadow = true;
-        box.receiveShadow = true;
-
-        scene.add(box)
+        // Test cube for shadows
+        // const box = new THREE.Mesh(
+        //     new THREE.BoxGeometry(3, 3, 3),
+        //     new THREE.MeshStandardMaterial({ color: 'blue' })
+        // );
+        // box.position.y = 1.5
+        // box.castShadow = true;
+        // box.receiveShadow = true;
+        // scene.add(box)
 
         const grassGeometry = new THREE.BufferGeometry();
         const vertices = new Float32Array([
@@ -141,19 +136,19 @@ class BasicWorldDemo {
         ])
         const indices = [
             0, 1, 5,
-            5, 6, 1,
+            5, 1, 6,
             1, 2, 6,
-            6, 7, 2,
+            6, 2, 7,
             2, 3, 7,
-            7, 8, 3,
+            7, 3, 8,
             3, 4, 8,
             5, 6, 9,
-            9, 10, 6,
+            9, 6, 10,
             6, 7, 10,
-            10, 11, 7,
+            10, 7, 11,
             7, 8, 11,
             9, 10, 12,
-            12, 13, 10,
+            12, 10, 13,
             10, 11, 13,
             12, 13, 14
         ]
@@ -171,12 +166,13 @@ class BasicWorldDemo {
 
         const numberOfGrassBlades = 1000;
         const perfectSquareNumberOfGrassBlades = Math.ceil(Math.sqrt(numberOfGrassBlades)) ** 2;
-        const grass = new THREE.InstancedMesh(grassGeometry, grassMaterial, perfectSquareNumberOfGrassBlades)
-
-        grass.castShadow = true;
-        grass.receiveShadow = true;
-
-        scene.add(grass);
+        const grass = new THREE.InstancedMesh(
+            grassGeometry,
+            // grassMaterial,
+            // new THREE.MeshStandardMaterial({ color: 'green', side: THREE.DoubleSide }),
+            new THREE.MeshLambertMaterial({ color: 'green', side: THREE.DoubleSide }),
+            perfectSquareNumberOfGrassBlades
+        )
 
         const dummy = new THREE.Object3D();
 
@@ -192,12 +188,18 @@ class BasicWorldDemo {
                 const z = -halfPlaneWidth + j * spacing + (Math.random() * spacing - spacing / 2)
                 const x = -halfPlaneWidth + i * spacing + (Math.random() * spacing - spacing / 2)
 
-                dummy.position.set(x, 0., z);
+                dummy.position.set(x, 0.0, z);
+                dummy.rotateY(Math.random() * Math.PI)
                 dummy.updateMatrix();
 
                 grass.setMatrixAt(index++, dummy.matrix);
             }
         }
+
+        grass.castShadow = true;
+        grass.receiveShadow = true;
+
+        scene.add(grass);
 
         controls = new OrbitControls(camera, renderer.domElement);
         controls.update();

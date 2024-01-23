@@ -50,5 +50,6 @@ void main() {
     vec4 rotated_local_pos = rotation_matrix * local_pos;
     
     vec4 world_pos = instanceMatrix * rotated_local_pos;
+    
     gl_Position = projectionMatrix * modelViewMatrix * world_pos;
 }
