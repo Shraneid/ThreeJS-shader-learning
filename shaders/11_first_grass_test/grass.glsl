@@ -2,6 +2,8 @@ uniform float u_time;
 varying vec3 pos;
 uniform sampler2D noise_texture;
 
+varying vec3 vNormal;
+
 uint murmurHash12(uvec2 src) {
     const uint M = 0x5bd1e995u;
     uint h = 1190494759u;
@@ -43,13 +45,19 @@ mat4 get_rotation_matrix_y(float angle) {
 void main() {
     vec4 sample_pos = instanceMatrix * vec4(1,1,1,1);
 
-    float random_angle = hash12(sample_pos.xz)*1000.;
-    mat4 rotation_matrix = get_rotation_matrix_y(random_angle);
+    vec3 test = normal;
+
+    float random_curve_rotation_angle = hash12(sample_pos.xy); // + sin(u_time) / 2.0;
 
     vec4 local_pos = vec4(position, 1.0);
-    vec4 rotated_local_pos = rotation_matrix * local_pos;
+    
+    mat4 bend_rotation_matrix = get_rotation_matrix_x(random_curve_rotation_angle * local_pos.y);
+
+    vec4 rotated_local_pos = bend_rotation_matrix * local_pos;
     
     vec4 world_pos = instanceMatrix * rotated_local_pos;
-    
     gl_Position = projectionMatrix * modelViewMatrix * world_pos;
+
+    vNormal = (modelMatrix * bend_rotation_matrix * vec4(test, 1.0)).xyz;
+    vNormal = normalize(vNormal);
 }

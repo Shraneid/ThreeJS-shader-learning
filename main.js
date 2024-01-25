@@ -155,6 +155,7 @@ class BasicWorldDemo {
 
         grassGeometry.setIndex(indices);
         grassGeometry.setAttribute('position', new THREE.BufferAttribute(vertices, 3))
+        grassGeometry.computeVertexNormals();
 
         const grassMaterial = new THREE.ShaderMaterial({
             // wireframe: true,
@@ -164,13 +165,14 @@ class BasicWorldDemo {
             side: THREE.DoubleSide
         })
 
-        const numberOfGrassBlades = 1000;
+        const numberOfGrassBlades = 100;
         const perfectSquareNumberOfGrassBlades = Math.ceil(Math.sqrt(numberOfGrassBlades)) ** 2;
         const grass = new THREE.InstancedMesh(
             grassGeometry,
-            // grassMaterial,
+            grassMaterial,
             // new THREE.MeshStandardMaterial({ color: 'green', side: THREE.DoubleSide }),
-            new THREE.MeshLambertMaterial({ color: 'green', side: THREE.DoubleSide }),
+            // new THREE.MeshLambertMaterial({ color: 'green', side: THREE.DoubleSide }),
+            // new THREE.MeshNormalMaterial({ side: THREE.DoubleSide }),
             perfectSquareNumberOfGrassBlades
         )
 
@@ -185,12 +187,12 @@ class BasicWorldDemo {
         // moving each instance to its position (rotation is done in the vertex shader using a hash function based on position)
         for (let j = 0; j < grassBladesPerAxis; j++) {
             for (let i = 0; i < grassBladesPerAxis; i++) {
-                const z = -halfPlaneWidth + j * spacing + (Math.random() * spacing - spacing / 2)
-                const x = -halfPlaneWidth + i * spacing + (Math.random() * spacing - spacing / 2)
+                const z = -halfPlaneWidth + j * spacing //+ (Math.random() * spacing - spacing / 2)
+                const x = -halfPlaneWidth + i * spacing //+ (Math.random() * spacing - spacing / 2)
 
-                dummy.position.set(x, 0.0, z);
-                dummy.rotateY(Math.random() * Math.PI)
-                dummy.updateMatrix();
+                // dummy.position.set(x, 0.0, z);
+                // dummy.rotateY(Math.random() * Math.PI)
+                // dummy.updateMatrix();
 
                 grass.setMatrixAt(index++, dummy.matrix);
             }
@@ -198,6 +200,7 @@ class BasicWorldDemo {
 
         grass.castShadow = true;
         grass.receiveShadow = true;
+        grass.instanceMatrix.needsUpdate = true;
 
         scene.add(grass);
 
@@ -218,7 +221,7 @@ class BasicWorldDemo {
         requestAnimationFrame((timeElapsed) => {
             renderer.render(scene, camera);
 
-            stats.update()
+            stats.update();
 
             uniformData.u_time.value = this.clock.getElapsedTime();
 
